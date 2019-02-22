@@ -24,7 +24,7 @@ typedef struct BasicHashTable {
  ****/
 Pair *create_pair(char *key, char *value)
 {
-  Pair *pair = malloc(sizeof(Pair));
+  Pair *pair = malloc(sizeof(Pair *));
   pair->key = strdup(key);
   pair->value = strdup(value);
 
@@ -70,8 +70,9 @@ unsigned int hash(char *str, int max)
  ****/
 BasicHashTable *create_hash_table(int capacity)
 {
-  BasicHashTable *ht;
-
+  BasicHashTable *ht = malloc(sizeof(BasicHashTable));
+  ht -> capacity = capacity;
+  ht -> storage = calloc(capacity, sizeof(Pair *));
   return ht;
 }
 
@@ -84,7 +85,16 @@ BasicHashTable *create_hash_table(int capacity)
  ****/
 void hash_table_insert(BasicHashTable *ht, char *key, char *value)
 {
+  unsigned int index = hash(key, ht -> capacity);
 
+  if (ht -> storage[index] != NULL) {
+    if (strcmp(ht -> storage[index] -> key, key) != 0) {
+      printf("WARNING: Keys do not match. Overiding existing key %s with new key %s.", ht -> storage[index] -> key, key);
+    }
+    destroy_pair(ht -> storage[index]);
+  }
+
+  ht -> storage[index] = create_pair(key, value);
 }
 
 /****
@@ -94,7 +104,14 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
  ****/
 void hash_table_remove(BasicHashTable *ht, char *key)
 {
+  unsigned int index = hash(key, ht -> capacity);
 
+  if (ht -> storage[index] == NULL) {
+    printf("ERROR: Key does not exist!");
+    exit(1);
+  } else {
+    destroy_pair(ht -> storage[index]);
+  }
 }
 
 /****
@@ -104,6 +121,14 @@ void hash_table_remove(BasicHashTable *ht, char *key)
  ****/
 char *hash_table_retrieve(BasicHashTable *ht, char *key)
 {
+  unsigned int index = hash(key, ht -> capacity);
+
+  if (ht -> storage[index] != NULL) {
+    if (strcmp(ht -> storage[index] -> key, key) == 0){
+      return ht -> storage[index] -> value;
+    }
+  }
+
   return NULL;
 }
 
@@ -114,7 +139,15 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
  ****/
 void destroy_hash_table(BasicHashTable *ht)
 {
+  if (ht != NULL) {
+    for (int i = 0; i < ht -> capacity; i++) {
+      if(ht -> storage[i] != NULL) {
+          destroy_pair(ht -> storage[i]);
+      }
+    }
 
+    free(ht);
+  }
 }
 
 
